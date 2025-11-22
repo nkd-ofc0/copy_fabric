@@ -80,7 +80,7 @@ export default function Home() {
 
     // Se for teste grátis, usa a senha mestra internamente (hardcoded no front só pra passar)
     // ATENÇÃO: Num app real complexo, isso seria validado no back. Pro MVP serve.
-    const codeToSend = isFreeTrial ? "VIP2025" : accessCode;
+    const codeToSend = isFreeTrial ? "Xciooptydf1.!" : accessCode;
 
     const result = await generateCopyAction(niche, topic, codeToSend);
 
