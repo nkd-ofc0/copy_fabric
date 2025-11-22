@@ -2,52 +2,44 @@
 
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
-// Inicializa a API com sua chave
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 
-export async function generateCopyAction(niche: string, topic: string) {
-  // Verificação de segurança da chave
+// DEFINA SUA SENHA AQUI (Pode mudar para o que quiser)
+const SENHA_MESTRA = "VIP2025"; 
+
+export async function generateCopyAction(niche: string, topic: string, accessCode: string) {
+  
+  // 1. A Grande Barreira: Verifica a senha antes de gastar 1 centavo de IA
+  if (accessCode !== SENHA_MESTRA) {
+    // Simula um delay para não facilitar força bruta
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    return { error: '⛔ Código de Acesso Inválido. Adquira sua licença para usar.' };
+  }
+
   if (!process.env.GEMINI_API_KEY) {
-    return { error: 'Chave de API não configurada no servidor.' };
+    return { error: 'Erro interno de configuração.' };
   }
 
   if (!niche || !topic) {
-    return { error: 'Por favor, preencha o nicho e o tópico.' };
+    return { error: 'Preencha todos os campos.' };
   }
 
   try {
-    // CORREÇÃO AQUI: Mudamos para 'gemini-1.5-flash-latest' que é mais estável
-    // Se der erro de novo, mudaremos para 'gemini-pro'
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash-001' });
 
     const prompt = `
-      Você é um Copywriter Expert especializado em vendas no Instagram para o nicho de: ${niche}.
-      
-      Sua tarefa: Criar uma legenda de Instagram altamente persuasiva sobre o tema: "${topic}".
-      
-      Regras Obrigatórias:
-      1. Use a estrutura AIDA (Atenção, Interesse, Desejo, Ação).
-      2. O tom deve ser engajador e direto, use emojis estrategicamente.
-      3. Comece com uma "Headline" (Gancho) impactante nas primeiras 2 linhas.
-      4. Inclua uma Chamada para Ação (CTA) clara no final.
-      5. Adicione 5 hashtags relevantes ao final.
-      
-      Responda APENAS com o texto da legenda.
+      Você é um Copywriter Expert para: ${niche}.
+      Tema: "${topic}".
+      Crie uma legenda de Instagram AIDA (Atenção, Interesse, Desejo, Ação).
+      Use emojis e hashtags. Seja persuasivo.
+      Responda APENAS a legenda.
     `;
 
     const result = await model.generateContent(prompt);
     const response = await result.response;
-    const text = response.text();
-
-    return { success: true, data: text };
+    return { success: true, data: response.text() };
   } catch (error: any) {
-    console.error("Erro detalhado da API:", error);
-    
-    // Tratamento de erro mais amigável
-    let msg = 'Falha ao gerar copy.';
-    if (error.message?.includes('404')) msg = 'Modelo de IA não encontrado ou indisponível na região.';
-    if (error.message?.includes('API key')) msg = 'Problema com a Chave da API.';
-
-    return { error: msg };
+    console.error("Erro API:", error);
+    return { error: 'Erro ao gerar. Tente novamente mais tarde.' };
   }
 }
