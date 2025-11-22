@@ -1,27 +1,30 @@
 import { Metadata } from 'next';
-import { niches } from '@/lib/niches';
-import { CopyTool } from '@/components/CopyTool'; // AGORA IMPORTAMOS O COMPONENTE CERTO
+import { CopyTool } from '@/components/CopyTool';
 
-export async function generateStaticParams() {
-  return niches.map((niche) => ({
-    slug: niche.slug,
-  }));
+// FUNÇÃO AUXILIAR: Transforma "hamburgueria-artesanal" em "Hamburgueria Artesanal"
+function formatSlug(slug: string) {
+  return slug
+    .split('-')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
 }
 
+// 1. REMOVEMOS O "generateStaticParams". 
+// Agora o Next.js cria a página na hora que a pessoa clica (Zero 404).
+
+// 2. GERA O TÍTULO AUTOMÁTICO BASEADO NA URL
 export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
-  const nicheData = niches.find((n) => n.slug === params.slug);
-  const title = nicheData ? nicheData.title : 'Negócios';
+  const title = formatSlug(params.slug);
 
   return {
     title: `Gerador de Legenda para ${title} - IA Grátis`,
-    description: `Crie posts para ${title} em segundos.`,
+    description: `Crie posts para ${title} em segundos. Ferramenta de IA gratuita.`,
   };
 }
 
+// 3. A PÁGINA
 export default function NichePage({ params }: { params: { slug: string } }) {
-  // Pegamos o título bonito da lista baseada no slug da URL
-  const nicheData = niches.find((n) => n.slug === params.slug);
-  const displayTitle = nicheData ? nicheData.title : params.slug;
+  const displayTitle = formatSlug(params.slug);
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col items-center py-10 px-4">
@@ -37,7 +40,7 @@ export default function NichePage({ params }: { params: { slug: string } }) {
         </p>
       </div>
 
-      {/* Passamos o nicho da URL para o motor já vir preenchido */}
+      {/* Passamos o título da URL direto para a ferramenta */}
       <CopyTool defaultNiche={displayTitle} />
 
       <div className="max-w-2xl mt-12 text-center text-slate-400 text-xs">
