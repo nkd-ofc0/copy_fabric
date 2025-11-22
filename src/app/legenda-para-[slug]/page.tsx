@@ -1,15 +1,13 @@
 import { Metadata } from 'next';
 import { niches } from '@/lib/niches';
-import Home from '../../page'; // Importando a Home voltando 2 pastas
+import { CopyTool } from '@/components/CopyTool'; // AGORA IMPORTAMOS O COMPONENTE CERTO
 
-// GERA AS PÁGINAS ESTÁTICAS
 export async function generateStaticParams() {
   return niches.map((niche) => ({
     slug: niche.slug,
   }));
 }
 
-// GERA O TÍTULO PARA O GOOGLE
 export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
   const nicheData = niches.find((n) => n.slug === params.slug);
   const title = nicheData ? nicheData.title : 'Negócios';
@@ -20,19 +18,30 @@ export async function generateMetadata({ params }: { params: { slug: string } })
   };
 }
 
-// A PÁGINA
 export default function NichePage({ params }: { params: { slug: string } }) {
+  // Pegamos o título bonito da lista baseada no slug da URL
+  const nicheData = niches.find((n) => n.slug === params.slug);
+  const displayTitle = nicheData ? nicheData.title : params.slug;
+
   return (
-    <div className="flex flex-col items-center">
-      <div className="w-full bg-blue-50 p-2 text-center text-blue-800 text-sm font-bold uppercase tracking-wider mb-4">
-        Ferramenta: {params.slug.replace('-', ' ')}
+    <div className="min-h-screen bg-slate-50 flex flex-col items-center py-10 px-4">
+       <div className="text-center mb-10 max-w-2xl">
+        <div className="inline-block bg-blue-100 text-blue-800 text-xs font-bold px-3 py-1 rounded-full mb-4 uppercase tracking-wider">
+           Ferramenta Especializada
+        </div>
+        <h1 className="text-3xl font-bold tracking-tight text-slate-900 mb-2">
+          Gerador de Legenda para <span className="text-blue-600">{displayTitle}</span>
+        </h1>
+        <p className="text-slate-600 text-lg">
+          Otimizado para o seu nicho.
+        </p>
       </div>
-      
-      {/* Aqui chamamos sua ferramenta original */}
-      <Home />
-      
-      <div className="max-w-2xl px-4 py-8 text-center text-slate-400 text-xs">
-        <p>SEO Otimizado para: {params.slug}</p>
+
+      {/* Passamos o nicho da URL para o motor já vir preenchido */}
+      <CopyTool defaultNiche={displayTitle} />
+
+      <div className="max-w-2xl mt-12 text-center text-slate-400 text-xs">
+         SEO Otimizado: /legenda-para-{params.slug}
       </div>
     </div>
   );
