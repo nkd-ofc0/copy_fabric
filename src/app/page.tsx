@@ -10,34 +10,28 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Sparkles, Copy, Lock, Star } from 'lucide-react';
 import { generateCopyAction } from './actions';
 
-// --- CÓDIGO DA FERRAMENTA DIRETO AQUI (SEM IMPORTAR) ---
 export default function Home() {
   const [loading, setLoading] = useState(false);
-  const [generatedContent, setGeneratedContent] = useState<string>('');
+  const [generatedContent, setGeneratedContent] = useState('');
   const [niche, setNiche] = useState('');
   const [topic, setTopic] = useState('');
   const [accessCode, setAccessCode] = useState('');
   const [error, setError] = useState('');
   const [freeUses, setFreeUses] = useState(0);
-  const [history, setHistory] = useState<any[]>([]);
   const [isVip, setIsVip] = useState(false);
-
-  const CHECKOUT_LINK = "https://seu-link-checkout.com"; 
+  const CHECKOUT_LINK = "https://mercadopago.com.br"; // Coloque seu link
 
   useEffect(() => {
     const savedUses = localStorage.getItem('copyfactory_uses');
-    const savedHistory = localStorage.getItem('copyfactory_history');
     const savedVip = localStorage.getItem('copyfactory_vip');
-
     if (savedUses) setFreeUses(parseInt(savedUses));
-    if (savedHistory) setHistory(JSON.parse(savedHistory));
     if (savedVip === 'true') setIsVip(true);
   }, []);
 
   const handleGenerate = async () => {
     const isFreeTrial = freeUses < 1;
     if (!isVip && !isFreeTrial && !accessCode) {
-      setError('🔒 Seu teste grátis acabou. Digite o Código VIP.');
+      setError('🔒 Teste grátis acabou. Digite a Senha VIP.');
       return;
     }
     if (!niche || !topic) {
@@ -48,9 +42,9 @@ export default function Home() {
     setLoading(true);
     setError('');
     
-    // SENHA CORRETA DO ACTION
-    const senhaCorretaDoAction = "VIP2025"; 
-    const codeToSend = isFreeTrial ? senhaCorretaDoAction : accessCode;
+    // ATENÇÃO: Garanta que essa senha é a mesma do actions.ts
+    const senhaDoAction = "VIP2025"; 
+    const codeToSend = isFreeTrial ? senhaDoAction : accessCode;
 
     const result = await generateCopyAction(niche, topic, codeToSend);
 
@@ -90,14 +84,14 @@ export default function Home() {
           <Card className="border-slate-200 shadow-lg">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                {isVip ? <Star className="h-5 w-5 text-yellow-500 fill-yellow-500" /> : <Lock className="h-5 w-5 text-blue-600" />}
+                {isVip ? <Star className="h-5 w-5 text-yellow-500" /> : <Lock className="h-5 w-5 text-blue-600" />}
                 {isVip ? "Acesso VIP Ativo" : "Configurar Post"}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
               {!isVip && freeUses >= 1 && (
                 <div className="bg-blue-50 p-5 rounded-lg border border-blue-200 text-center space-y-3">
-                  <h3 className="text-blue-900 font-bold text-lg">Teste grátis acabou!</h3>
+                  <h3 className="text-blue-900 font-bold text-lg">Acabou o teste grátis!</h3>
                   <div className="flex flex-col gap-2">
                     <Input type="password" placeholder="Senha VIP..." value={accessCode} onChange={(e) => setAccessCode(e.target.value)} className="bg-white text-center" />
                     <Button className="w-full bg-green-600 hover:bg-green-700" onClick={() => window.open(CHECKOUT_LINK, '_blank')}>Comprar Acesso</Button>
