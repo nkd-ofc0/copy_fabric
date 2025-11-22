@@ -157,7 +157,7 @@ export default function Home() {
                       className="w-full bg-green-600 hover:bg-green-700 font-bold animate-pulse"
                       onClick={() => window.open(CHECKOUT_LINK, '_blank')}
                     >
-                      Comprar Acesso (R$ 19,90)
+                      Comprar Acesso (R$ 16,90)
                     </Button>
                   </div>
                 </div>
