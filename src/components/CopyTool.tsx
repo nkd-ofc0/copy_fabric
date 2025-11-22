@@ -9,7 +9,6 @@ import { Input } from '@/components/ui/input';
 import { Sparkles, Lock, Star } from 'lucide-react';
 import { generateCopyAction } from '@/app/actions';
 
-// Recebe o nicho vindo da página "pai"
 export function CopyTool({ defaultNiche }: { defaultNiche: string }) {
   const [loading, setLoading] = useState(false);
   const [generatedContent, setGeneratedContent] = useState('');
@@ -20,7 +19,6 @@ export function CopyTool({ defaultNiche }: { defaultNiche: string }) {
   const [freeUses, setFreeUses] = useState(0);
   const [isVip, setIsVip] = useState(false);
 
-  // Link do seu checkout
   const CHECKOUT_LINK = "https://mercadopago.com.br"; 
 
   useEffect(() => {
@@ -36,6 +34,7 @@ export function CopyTool({ defaultNiche }: { defaultNiche: string }) {
   const handleGenerate = async () => {
     const isFreeTrial = freeUses < 1;
     
+    // Se não é VIP, não é teste grátis e não digitou senha: BLOQUEIA
     if (!isVip && !isFreeTrial && !accessCode) {
       setError('🔒 Teste grátis acabou. Digite o Código VIP.');
       return;
@@ -48,14 +47,23 @@ export function CopyTool({ defaultNiche }: { defaultNiche: string }) {
     setLoading(true);
     setError('');
     
-    // IMPORTANTE: A senha aqui deve bater com a do actions.ts
     const senhaDoAction = "VIP2025"; 
-    const codeToSend = isFreeTrial ? senhaDoAction : accessCode;
+    
+    // --- CORREÇÃO AQUI ---
+    // Se for VIP ou Grátis, usa a senha mestra automática. 
+    // Se não, tenta usar a senha que o usuário digitou no campo.
+    const codeToSend = (isFreeTrial || isVip) ? senhaDoAction : accessCode;
 
     const result = await generateCopyAction(niche, topic, codeToSend);
 
     if (result.error) {
       setError(result.error);
+      // Se deu erro (senha errada), remove o VIP pra obrigar a digitar de novo
+      if (isVip) {
+         setIsVip(false);
+         localStorage.removeItem('copyfactory_vip');
+         setError('Sua sessão VIP expirou ou a senha mudou.');
+      }
     } else if (result.data) {
       setGeneratedContent(result.data);
       
@@ -65,6 +73,7 @@ export function CopyTool({ defaultNiche }: { defaultNiche: string }) {
         localStorage.setItem('copyfactory_uses', newUses.toString());
       }
       
+      // Se funcionou e não era grátis, então a senha digitada estava certa: VIRA VIP
       if (!isFreeTrial && !result.error) {
         setIsVip(true);
         localStorage.setItem('copyfactory_vip', 'true');
@@ -84,11 +93,12 @@ export function CopyTool({ defaultNiche }: { defaultNiche: string }) {
         <Card className="border-slate-200 shadow-lg">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              {isVip ? <Star className="h-5 w-5 text-yellow-500" /> : <Lock className="h-5 w-5 text-blue-600" />}
+              {isVip ? <Star className="h-5 w-5 text-yellow-500 fill-yellow-500" /> : <Lock className="h-5 w-5 text-blue-600" />}
               {isVip ? "Acesso VIP Ativo" : "Configurar Post"}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
+            {/* SÓ MOSTRA O CAMPO DE PAGAR SE NÃO FOR VIP E JÁ GASTOU O GRÁTIS */}
             {!isVip && freeUses >= 1 && (
               <div className="bg-blue-50 p-5 rounded-lg border border-blue-200 text-center space-y-3">
                 <h3 className="text-blue-900 font-bold text-lg">Teste grátis acabou!</h3>
