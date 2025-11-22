@@ -1,7 +1,7 @@
 import { Metadata } from 'next';
 import { CopyTool } from '@/components/CopyTool';
 
-// FUNÇÃO AUXILIAR: Transforma "hamburgueria-artesanal" em "Hamburgueria Artesanal"
+// Função para deixar o título bonito
 function formatSlug(slug: string) {
   return slug
     .split('-')
@@ -9,12 +9,15 @@ function formatSlug(slug: string) {
     .join(' ');
 }
 
-// 1. REMOVEMOS O "generateStaticParams". 
-// Agora o Next.js cria a página na hora que a pessoa clica (Zero 404).
+// DEFINIÇÃO DO TIPO (Isso corrige o erro vermelho)
+type Props = {
+  params: Promise<{ slug: string }>
+}
 
-// 2. GERA O TÍTULO AUTOMÁTICO BASEADO NA URL
-export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
-  const title = formatSlug(params.slug);
+// 1. GERA O TÍTULO (Com await)
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const resolvedParams = await params; // O SEGREDO ESTÁ AQUI
+  const title = formatSlug(resolvedParams.slug);
 
   return {
     title: `Gerador de Legenda para ${title} - IA Grátis`,
@@ -22,9 +25,10 @@ export async function generateMetadata({ params }: { params: { slug: string } })
   };
 }
 
-// 3. A PÁGINA
-export default function NichePage({ params }: { params: { slug: string } }) {
-  const displayTitle = formatSlug(params.slug);
+// 2. A PÁGINA (Agora é async e usa await)
+export default async function NichePage({ params }: Props) {
+  const resolvedParams = await params; // O SEGREDO ESTÁ AQUI TAMBÉM
+  const displayTitle = formatSlug(resolvedParams.slug);
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col items-center py-10 px-4">
@@ -44,7 +48,7 @@ export default function NichePage({ params }: { params: { slug: string } }) {
       <CopyTool defaultNiche={displayTitle} />
 
       <div className="max-w-2xl mt-12 text-center text-slate-400 text-xs">
-         SEO Otimizado: /legenda-para-{params.slug}
+         SEO Otimizado: /legenda-para-{resolvedParams.slug}
       </div>
     </div>
   );
