@@ -5,7 +5,7 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 
 // DEFINA SUA SENHA AQUI (Pode mudar para o que quiser)
-const SENHA_MESTRA = "VIP2025"; 
+const SENHA_MESTRA = "Xciooptydf1.!"; 
 
 export async function generateCopyAction(niche: string, topic: string, accessCode: string) {
   
@@ -25,7 +25,7 @@ export async function generateCopyAction(niche: string, topic: string, accessCod
   }
 
   try {
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash-001' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
     const prompt = `
       Você é um Copywriter Expert para: ${niche}.
@@ -43,3 +43,4 @@ export async function generateCopyAction(niche: string, topic: string, accessCod
     return { error: 'Erro ao gerar. Tente novamente mais tarde.' };
   }
 }
+
