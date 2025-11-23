@@ -46,7 +46,7 @@ export default async function Page({ params }: Props) {
              Criado e Desenvolvido por
            </p>
            <a 
-             href="https://instagram.com/SEU_INSTAGRAM" 
+             href="https://www.instagram.com/nkd.ofc/" 
              target="_blank" 
              className="text-blue-600 font-black text-sm hover:underline flex items-center gap-1"
            >
