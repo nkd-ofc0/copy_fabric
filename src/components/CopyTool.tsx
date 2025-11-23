@@ -6,10 +6,10 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
-import { Sparkles, Lock, Star, Zap, CheckCircle2, Crown, KeyRound, LogIn, History, Copy } from 'lucide-react';
+import { Sparkles, Lock, Star, Zap, CheckCircle2, Crown, KeyRound, LogIn, History, Copy, Trash2, Eye } from 'lucide-react';
 import { generateCopyAction } from '@/app/actions';
 
-// Definição do tipo para o histórico
+// Tipo do Histórico
 type HistoryItem = {
   id: number;
   niche: string;
@@ -23,18 +23,15 @@ export function CopyTool({ defaultNiche }: { defaultNiche: string }) {
   const [generatedContent, setGeneratedContent] = useState('');
   const [niche, setNiche] = useState(defaultNiche || '');
   const [topic, setTopic] = useState('');
-  
-  // Campos de Senha
   const [accessCode, setAccessCode] = useState(''); 
-  
   const [error, setError] = useState('');
+  
   const [freeUses, setFreeUses] = useState(0);
   const [isVip, setIsVip] = useState(false);
   
-  // Novo Estado: Histórico
+  // Estado do Histórico
   const [history, setHistory] = useState<HistoryItem[]>([]);
 
-  // CONFIGURAÇÕES
   const CHECKOUT_LINK = "https://www.mercadopago.com.br/subscriptions/checkout?preapproval_plan_id=412d19310b5f4e60a60b366da10c0f92"; 
   const SENHA_MESTRA_DO_SERVIDOR = "Xciooptydf1.!"; 
 
@@ -50,7 +47,6 @@ export function CopyTool({ defaultNiche }: { defaultNiche: string }) {
     if (savedHistory) setHistory(JSON.parse(savedHistory));
   }, [defaultNiche]);
 
-  // Função para Salvar no Histórico
   const saveToHistory = (nicheText: string, topicText: string, contentText: string) => {
     const newItem: HistoryItem = {
       id: Date.now(),
@@ -59,11 +55,15 @@ export function CopyTool({ defaultNiche }: { defaultNiche: string }) {
       content: contentText,
       date: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     };
-    // Mantém apenas os últimos 5 itens
     const newHistory = [newItem, ...history].slice(0, 5);
     setHistory(newHistory);
     localStorage.setItem('copyfactory_history', JSON.stringify(newHistory));
   };
+
+  const clearHistory = () => {
+    setHistory([]);
+    localStorage.removeItem('copyfactory_history');
+  }
 
   const handleLogin = () => {
     if (accessCode === SENHA_MESTRA_DO_SERVIDOR) {
@@ -72,7 +72,7 @@ export function CopyTool({ defaultNiche }: { defaultNiche: string }) {
       setError('');
       alert("Acesso VIP Liberado com Sucesso! 🚀");
     } else {
-      setError("Senha incorreta. Verifique seu e-mail de compra.");
+      setError("Senha incorreta.");
     }
   };
 
@@ -81,9 +81,14 @@ export function CopyTool({ defaultNiche }: { defaultNiche: string }) {
     const currentVip = localStorage.getItem('copyfactory_vip') === 'true';
     const isFreeTrial = currentUses < 1;
 
-    // Se não é VIP e acabou o trial: BLOQUEIA
-    if (!currentVip && !isFreeTrial) {
-      setError('🔒 Limite grátis atingido. Faça login ou compre acesso.');
+    if (currentUses !== freeUses) setFreeUses(currentUses);
+    if (currentVip !== isVip) setIsVip(currentVip);
+
+    const userProvidedPassword = accessCode.trim();
+
+    if (!currentVip && !isFreeTrial && !userProvidedPassword) {
+      setError('🔒 Seu teste gratuito acabou. Apoie o projeto para continuar.');
+      setFreeUses(currentUses); 
       return;
     }
 
@@ -95,30 +100,36 @@ export function CopyTool({ defaultNiche }: { defaultNiche: string }) {
     setLoading(true);
     setError('');
     
-    const codeToSend = SENHA_MESTRA_DO_SERVIDOR;
+    const codeToSend = userProvidedPassword || ((isFreeTrial || currentVip) ? SENHA_MESTRA_DO_SERVIDOR : '');
 
     const result = await generateCopyAction(niche, topic, codeToSend);
 
     if (result.error) {
       setError(result.error);
+      if (currentVip) {
+         setIsVip(false);
+         localStorage.removeItem('copyfactory_vip');
+      }
     } else if (result.data) {
       setGeneratedContent(result.data);
-      
-      // Salva no histórico
       saveToHistory(niche, topic, result.data);
       
-      // Consome trial se necessário
-      if (isFreeTrial && !currentVip) {
+      if (isFreeTrial && !userProvidedPassword) {
         const newUses = currentUses + 1;
         setFreeUses(newUses);
         localStorage.setItem('copyfactory_uses', newUses.toString());
+      }
+      
+      if (!result.error && userProvidedPassword) {
+        setIsVip(true);
+        localStorage.setItem('copyfactory_vip', 'true');
       }
     }
     setLoading(false);
   };
 
-  const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text);
+  const copyToClipboard = () => {
+    navigator.clipboard.writeText(generatedContent);
     alert('Legenda copiada!');
   };
 
@@ -127,6 +138,7 @@ export function CopyTool({ defaultNiche }: { defaultNiche: string }) {
   return (
     <div className="grid gap-8 w-full max-w-6xl grid-cols-1 md:grid-cols-12">
       
+      {/* --- ESQUERDA --- */}
       <div className="md:col-span-7 space-y-6">
         <Card className="border-slate-200 shadow-xl bg-white">
           <CardHeader className="pb-4 border-b border-slate-100">
@@ -137,7 +149,7 @@ export function CopyTool({ defaultNiche }: { defaultNiche: string }) {
               </CardTitle>
               {!isVip && freeUses === 0 && (
                 <span className="text-[10px] bg-green-100 text-green-700 px-3 py-1 rounded-full font-bold border border-green-200 uppercase tracking-wide animate-pulse">
-                  Teste Grátis Ativo
+                  Teste Grátis Disponível
                 </span>
               )}
             </div>
@@ -179,7 +191,7 @@ export function CopyTool({ defaultNiche }: { defaultNiche: string }) {
                   </p>
                 </div>
                 <Button className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-6 text-lg shadow-lg transition-all hover:scale-[1.02]" onClick={() => window.open(CHECKOUT_LINK, '_blank')}>
-                  QUERO SER VIP (R$ 19,90)
+                  QUERO SER VIP (R$ 16,90)
                 </Button>
               </div>
             )}
@@ -206,61 +218,87 @@ export function CopyTool({ defaultNiche }: { defaultNiche: string }) {
         </Card>
       </div>
 
+      {/* --- DIREITA (PREVIEW + HISTÓRICO) --- */}
       <div className="md:col-span-5 space-y-6">
-        {/* CARD DE RESULTADO */}
-        <Card className="bg-slate-900 text-slate-50 border-slate-800 shadow-2xl min-h-[400px] relative overflow-hidden flex flex-col">
+        
+        {/* PREVIEW - COM ALTURA FIXA E SCROLL INTERNO */}
+        <Card className="bg-slate-900 text-slate-50 border-slate-800 shadow-2xl relative overflow-hidden flex flex-col">
           <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500"></div>
-          <CardHeader className="pb-2">
+          <CardHeader className="pb-2 border-b border-slate-800">
             <CardTitle className="text-lg flex items-center justify-between">
               <span>Resultado</span>
               {generatedContent && <span className="text-[10px] bg-green-500/20 text-green-400 px-2 py-1 rounded border border-green-500/30">Pronto</span>}
             </CardTitle>
           </CardHeader>
-          <CardContent className="flex-1 flex flex-col">
-            {generatedContent ? (
-              <div className="flex flex-col h-full justify-between gap-4">
-                <div className="whitespace-pre-wrap text-slate-300 font-mono text-sm leading-relaxed p-2 bg-slate-950/50 rounded-lg border border-slate-800">{generatedContent}</div>
-                <Button onClick={() => copyToClipboard(generatedContent)} variant="secondary" className="w-full mt-auto font-bold hover:bg-white transition-colors">Copiar Texto</Button>
-              </div>
-            ) : (
-              <div className="flex-1 flex flex-col items-center justify-center text-slate-600 gap-4 p-8">
-                <div className="w-16 h-16 rounded-full bg-slate-800/50 flex items-center justify-center"><Sparkles className="h-8 w-8 opacity-50" /></div>
-                <p className="text-sm text-center max-w-[200px] leading-relaxed">{isLocked ? "🔒 Aguardando desbloqueio..." : "Preencha os dados ao lado para a IA trabalhar..."}</p>
-              </div>
+          <CardContent className="p-0">
+            {/* AQUI ESTÁ O SEGREDO DO LAYOUT: Altura fixa de 350px */}
+            <div className="h-[350px] overflow-y-auto p-4 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-slate-900">
+                {generatedContent ? (
+                  <div className="whitespace-pre-wrap text-slate-300 font-mono text-sm leading-relaxed">
+                    {generatedContent}
+                  </div>
+                ) : (
+                  <div className="h-full flex flex-col items-center justify-center text-slate-600 gap-4">
+                    <div className="w-12 h-12 rounded-full bg-slate-800/50 flex items-center justify-center"><Sparkles className="h-6 w-6 opacity-50" /></div>
+                    <p className="text-sm text-center max-w-[200px] leading-relaxed">{isLocked ? "🔒 Bloqueado" : "O texto aparecerá aqui..."}</p>
+                  </div>
+                )}
+            </div>
+            
+            {generatedContent && (
+                <div className="p-4 border-t border-slate-800 bg-slate-900">
+                    <Button onClick={copyToClipboard} variant="secondary" className="w-full font-bold hover:bg-white transition-colors">
+                        Copiar Texto
+                    </Button>
+                </div>
             )}
           </CardContent>
         </Card>
 
-        {/* LISTA DE HISTÓRICO */}
-        {history.length > 0 && (
-          <Card className="border-slate-200 bg-slate-50">
-            <CardHeader className="py-3 border-b border-slate-100">
-              <CardTitle className="text-sm flex items-center gap-2 text-slate-600">
-                <History className="h-4 w-4" /> Últimas Gerações
+        {/* HISTÓRICO */}
+        <Card className="border-slate-200 bg-slate-50 shadow-sm">
+            <CardHeader className="py-3 border-b border-slate-200 bg-white rounded-t-lg flex flex-row items-center justify-between">
+              <CardTitle className="text-sm flex items-center gap-2 text-slate-700 font-bold">
+                <History className="h-4 w-4 text-blue-500" /> Histórico Recente
               </CardTitle>
+              {history.length > 0 && (
+                  <button onClick={clearHistory} className="text-[10px] text-red-400 hover:text-red-600 flex items-center gap-1 hover:underline">
+                      <Trash2 className="w-3 h-3" /> Limpar
+                  </button>
+              )}
             </CardHeader>
-            <CardContent className="space-y-3 pt-3">
-              {history.map((item) => (
-                <div key={item.id} className="group flex items-center justify-between p-3 bg-white rounded-lg border border-slate-200 hover:border-blue-300 transition-all shadow-sm">
-                  <div className="overflow-hidden">
-                    <p className="font-bold text-xs text-slate-700 truncate w-48">{item.topic}</p>
-                    <p className="text-[10px] text-slate-400 flex gap-2">
-                      <span>{item.niche}</span> • <span>{item.date}</span>
-                    </p>
+            <CardContent className="p-0">
+              {history.length > 0 ? (
+                  <div className="max-h-[250px] overflow-y-auto">
+                    {history.map((item) => (
+                        <div 
+                            key={item.id} 
+                            // Clicar na linha carrega o texto
+                            onClick={() => setGeneratedContent(item.content)}
+                            className="group flex items-center justify-between p-3 bg-white border-b border-slate-100 hover:bg-blue-50 transition-all cursor-pointer"
+                        >
+                            <div className="overflow-hidden pr-2">
+                                <p className="font-bold text-xs text-slate-700 truncate w-48">{item.topic}</p>
+                                <p className="text-[10px] text-slate-400 flex gap-2 mt-1">
+                                <span className="bg-slate-100 px-1 rounded border border-slate-200">{item.niche}</span> 
+                                <span>{item.date}</span>
+                                </p>
+                            </div>
+                            {/* Botão Visual de VER */}
+                            <div className="h-8 w-8 flex items-center justify-center rounded-full bg-slate-50 text-slate-400 group-hover:bg-blue-100 group-hover:text-blue-600 transition-colors">
+                                <Eye className="h-4 w-4" />
+                            </div>
+                        </div>
+                    ))}
                   </div>
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    className="h-8 w-8 text-slate-400 hover:text-blue-600 hover:bg-blue-50"
-                    onClick={() => copyToClipboard(item.content)}
-                  >
-                    <Copy className="h-4 w-4" />
-                  </Button>
-                </div>
-              ))}
+              ) : (
+                  <div className="p-8 text-center text-slate-400 flex flex-col items-center gap-2">
+                      <History className="h-8 w-8 opacity-20" />
+                      <p className="text-xs font-medium">Suas últimas 5 legendas ficarão salvas aqui automaticamente.</p>
+                  </div>
+              )}
             </CardContent>
           </Card>
-        )}
       </div>
     </div>
   );
