@@ -28,8 +28,6 @@ export function CopyTool({ defaultNiche }: { defaultNiche: string }) {
   
   const [freeUses, setFreeUses] = useState(0);
   const [isVip, setIsVip] = useState(false);
-  
-  // Estado do Histórico
   const [history, setHistory] = useState<HistoryItem[]>([]);
 
   const CHECKOUT_LINK = "https://www.mercadopago.com.br/subscriptions/checkout?preapproval_plan_id=412d19310b5f4e60a60b366da10c0f92"; 
@@ -37,7 +35,6 @@ export function CopyTool({ defaultNiche }: { defaultNiche: string }) {
 
   useEffect(() => {
     if (defaultNiche) setNiche(defaultNiche);
-    
     const savedUses = localStorage.getItem('copyfactory_uses');
     const savedVip = localStorage.getItem('copyfactory_vip');
     const savedHistory = localStorage.getItem('copyfactory_history');
@@ -87,7 +84,7 @@ export function CopyTool({ defaultNiche }: { defaultNiche: string }) {
     const userProvidedPassword = accessCode.trim();
 
     if (!currentVip && !isFreeTrial && !userProvidedPassword) {
-      setError('🔒 Seu teste gratuito acabou. Apoie o projeto para continuar.');
+      setError('🔒 Teste acabou. Apoie o projeto para continuar.');
       setFreeUses(currentUses); 
       return;
     }
@@ -119,7 +116,6 @@ export function CopyTool({ defaultNiche }: { defaultNiche: string }) {
         setFreeUses(newUses);
         localStorage.setItem('copyfactory_uses', newUses.toString());
       }
-      
       if (!result.error && userProvidedPassword) {
         setIsVip(true);
         localStorage.setItem('copyfactory_vip', 'true');
@@ -136,118 +132,108 @@ export function CopyTool({ defaultNiche }: { defaultNiche: string }) {
   const isLocked = !isVip && freeUses >= 1;
 
   return (
-    <div className="grid gap-8 w-full max-w-6xl grid-cols-1 md:grid-cols-12">
+    <div className="grid gap-6 w-full max-w-6xl grid-cols-1 md:grid-cols-12 items-start">
       
       {/* --- ESQUERDA --- */}
-      <div className="md:col-span-7 space-y-6">
+      <div className="md:col-span-7 space-y-4">
         <Card className="border-slate-200 shadow-xl bg-white">
-          <CardHeader className="pb-4 border-b border-slate-100">
-            <div className="flex items-center justify-between mb-2">
-              <CardTitle className="flex items-center gap-2 text-xl text-slate-800">
-                {isVip ? <Star className="h-6 w-6 text-yellow-500 fill-yellow-500" /> : <Zap className="h-6 w-6 text-blue-600 fill-blue-100" />}
-                {isVip ? "Membro VIP Ativo" : "Gerador Viral AI"}
+          <CardHeader className="pb-3 border-b border-slate-100 px-5 pt-5">
+            <div className="flex items-center justify-between mb-1">
+              <CardTitle className="flex items-center gap-2 text-lg text-slate-800">
+                {isVip ? <Star className="h-5 w-5 text-yellow-500 fill-yellow-500" /> : <Zap className="h-5 w-5 text-blue-600 fill-blue-100" />}
+                {isVip ? "Membro VIP" : "Gerador Viral AI"}
               </CardTitle>
               {!isVip && freeUses === 0 && (
-                <span className="text-[10px] bg-green-100 text-green-700 px-3 py-1 rounded-full font-bold border border-green-200 uppercase tracking-wide animate-pulse">
-                  Teste Grátis Disponível
+                <span className="text-[10px] bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-bold border border-green-200 uppercase tracking-wide animate-pulse">
+                  Teste Grátis
                 </span>
               )}
             </div>
-            <div className="space-y-2 pt-2">
-              <p className="text-slate-600 leading-relaxed text-sm">
-                Transforme ideias simples em legendas impossíveis de ignorar. Economize tempo e venda mais.
-              </p>
-            </div>
+            <p className="text-slate-500 text-xs leading-relaxed">
+              Transforme ideias simples em legendas virais. Economize tempo.
+            </p>
           </CardHeader>
           
-          <CardContent className="space-y-6 pt-6">
+          <CardContent className="space-y-4 px-5 py-5">
             {!isVip && (
-              <div className="bg-slate-50 p-4 rounded-lg border border-slate-200 mb-6">
-                <div className="flex items-center gap-2 mb-3">
-                  <KeyRound className="h-4 w-4 text-blue-600" />
-                  <Label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
-                    Já é membro? Entre aqui:
+              <div className="bg-slate-50 p-3 rounded-lg border border-slate-200 mb-2 flex gap-2 items-end">
+                <div className="flex-1">
+                  <Label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1 block">
+                    Já é membro?
                   </Label>
+                  <Input type="password" placeholder="Senha VIP..." value={accessCode} onChange={(e) => setAccessCode(e.target.value)} className="bg-white h-9 text-sm" />
                 </div>
-                <div className="flex gap-2">
-                  <div className="relative flex-1">
-                    <Input type="password" placeholder="Digite sua Senha VIP..." value={accessCode} onChange={(e) => setAccessCode(e.target.value)} className="bg-white border-slate-300" />
-                  </div>
-                  <Button onClick={handleLogin} className="bg-slate-800 hover:bg-slate-900 text-white font-bold px-6">
-                    <LogIn className="w-4 h-4 mr-2" /> Entrar
-                  </Button>
-                </div>
+                <Button onClick={handleLogin} className="bg-slate-800 hover:bg-slate-900 text-white h-9 px-4">
+                  <LogIn className="w-4 h-4" />
+                </Button>
               </div>
             )}
 
             {isLocked && (
-              <div className="bg-blue-50 p-6 rounded-xl border-2 border-blue-100 space-y-4 animate-in fade-in slide-in-from-top-2 shadow-inner mb-6">
-                <div className="text-center space-y-2">
-                  <h3 className="text-blue-900 font-black text-xl flex items-center justify-center gap-2 uppercase tracking-tight">
-                    <Crown className="w-6 h-6 text-yellow-500 fill-yellow-500" /> Limite Grátis Atingido
-                  </h3>
-                  <p className="text-slate-700 text-sm font-medium leading-relaxed max-w-md mx-auto">
-                    Gostou da ferramenta? Apoie o projeto e tenha acesso ilimitado para criar quantas copys quiser.
+              <div className="bg-blue-50 p-5 rounded-xl border-2 border-blue-100 space-y-3 animate-in fade-in zoom-in-95 shadow-inner text-center">
+                <Crown className="w-8 h-8 text-yellow-500 fill-yellow-500 mx-auto" />
+                <div>
+                  <h3 className="text-blue-900 font-bold text-base">Limite Grátis Atingido</h3>
+                  <p className="text-slate-600 text-xs mt-1 max-w-xs mx-auto">
+                    Gostou? Tenha acesso ilimitado e crie quantas copys quiser.
                   </p>
                 </div>
-                <Button className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-6 text-lg shadow-lg transition-all hover:scale-[1.02]" onClick={() => window.open(CHECKOUT_LINK, '_blank')}>
+                <Button className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-4 text-base shadow-md transition-all hover:scale-[1.02]" onClick={() => window.open(CHECKOUT_LINK, '_blank')}>
                   QUERO SER VIP (R$ 16,90)
                 </Button>
               </div>
             )}
 
-            <div className={`space-y-4 ${isLocked ? 'opacity-50 pointer-events-none grayscale' : ''}`}>
-              <div className="space-y-2">
-                <Label className="text-slate-700 font-bold">Qual o seu Nicho?</Label>
-                <Input value={niche} onChange={(e) => setNiche(e.target.value)} placeholder="Ex: Hamburgueria, Advogado..." className="h-12 text-lg bg-slate-50" />
+            <div className={`space-y-3 ${isLocked ? 'opacity-40 pointer-events-none grayscale' : ''}`}>
+              <div className="space-y-1">
+                <Label className="text-slate-700 font-bold text-xs">Nicho</Label>
+                <Input value={niche} onChange={(e) => setNiche(e.target.value)} placeholder="Ex: Hamburgueria..." className="h-10 text-sm bg-slate-50" />
               </div>
-              <div className="space-y-2">
-                <Label className="text-slate-700 font-bold">Sobre o que é o post?</Label>
-                <Textarea value={topic} onChange={(e) => setTopic(e.target.value)} placeholder="Descreva o conteúdo, promoção ou dica..." className="h-32 resize-none text-base bg-slate-50" />
+              <div className="space-y-1">
+                <Label className="text-slate-700 font-bold text-xs">Sobre o post</Label>
+                <Textarea value={topic} onChange={(e) => setTopic(e.target.value)} placeholder="Descreva o conteúdo..." className="h-24 resize-none text-sm bg-slate-50" />
               </div>
             </div>
 
-            {error && <div className="bg-red-50 text-red-600 p-4 rounded-lg text-sm font-medium border border-red-100 flex items-center gap-2 animate-in slide-in-from-top-1"><Lock className="w-4 h-4" /> {error}</div>}
+            {error && <div className="bg-red-50 text-red-600 p-2 rounded text-xs font-medium border border-red-100 flex items-center gap-2"><Lock className="w-3 h-3" /> {error}</div>}
 
             {!isLocked && (
-                <Button onClick={handleGenerate} className="w-full py-7 text-lg font-bold shadow-lg shadow-blue-100 bg-blue-600 hover:bg-blue-700 hover:scale-[1.01] transition-all mt-2" disabled={loading}>
-                {loading ? <span className="flex items-center gap-2">Criando... <Sparkles className="w-4 h-4 animate-spin"/></span> : <span className="flex items-center gap-2"><Sparkles className="w-5 h-5" /> Gerar Legenda Agora</span>}
+                <Button onClick={handleGenerate} className="w-full py-6 text-base font-bold shadow-md bg-blue-600 hover:bg-blue-700 transition-all" disabled={loading}>
+                {loading ? <span className="flex items-center gap-2">Criando... <Sparkles className="w-4 h-4 animate-spin"/></span> : <span className="flex items-center gap-2"><Sparkles className="w-4 h-4" /> Gerar Legenda</span>}
                 </Button>
             )}
           </CardContent>
         </Card>
       </div>
 
-      {/* --- DIREITA (PREVIEW + HISTÓRICO) --- */}
-      <div className="md:col-span-5 space-y-6">
+      {/* --- DIREITA --- */}
+      <div className="md:col-span-5 space-y-4">
         
-        {/* PREVIEW - COM ALTURA FIXA E SCROLL INTERNO */}
-        <Card className="bg-slate-900 text-slate-50 border-slate-800 shadow-2xl relative overflow-hidden flex flex-col">
+        {/* PREVIEW */}
+        <Card className="bg-slate-900 text-slate-50 border-slate-800 shadow-2xl relative overflow-hidden flex flex-col h-[420px]">
           <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500"></div>
-          <CardHeader className="pb-2 border-b border-slate-800">
-            <CardTitle className="text-lg flex items-center justify-between">
+          <CardHeader className="pb-2 border-b border-slate-800 px-4 pt-4">
+            <CardTitle className="text-base flex items-center justify-between">
               <span>Resultado</span>
-              {generatedContent && <span className="text-[10px] bg-green-500/20 text-green-400 px-2 py-1 rounded border border-green-500/30">Pronto</span>}
+              {generatedContent && <span className="text-[10px] bg-green-500/20 text-green-400 px-2 py-0.5 rounded border border-green-500/30">Pronto</span>}
             </CardTitle>
           </CardHeader>
-          <CardContent className="p-0">
-            {/* AQUI ESTÁ O SEGREDO DO LAYOUT: Altura fixa de 350px */}
-            <div className="h-[350px] overflow-y-auto p-4 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-slate-900">
+          <CardContent className="p-0 flex-1 flex flex-col min-h-0">
+            <div className="flex-1 overflow-y-auto p-4 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-slate-900">
                 {generatedContent ? (
-                  <div className="whitespace-pre-wrap text-slate-300 font-mono text-sm leading-relaxed">
+                  <div className="whitespace-pre-wrap text-slate-300 font-mono text-xs leading-relaxed">
                     {generatedContent}
                   </div>
                 ) : (
-                  <div className="h-full flex flex-col items-center justify-center text-slate-600 gap-4">
-                    <div className="w-12 h-12 rounded-full bg-slate-800/50 flex items-center justify-center"><Sparkles className="h-6 w-6 opacity-50" /></div>
-                    <p className="text-sm text-center max-w-[200px] leading-relaxed">{isLocked ? "🔒 Bloqueado" : "O texto aparecerá aqui..."}</p>
+                  <div className="h-full flex flex-col items-center justify-center text-slate-600 gap-3">
+                    <div className="w-10 h-10 rounded-full bg-slate-800/50 flex items-center justify-center"><Sparkles className="h-5 w-5 opacity-50" /></div>
+                    <p className="text-xs text-center max-w-[180px] leading-relaxed">{isLocked ? "🔒 Bloqueado" : "O texto aparecerá aqui..."}</p>
                   </div>
                 )}
             </div>
-            
             {generatedContent && (
-                <div className="p-4 border-t border-slate-800 bg-slate-900">
-                    <Button onClick={copyToClipboard} variant="secondary" className="w-full font-bold hover:bg-white transition-colors">
+                <div className="p-3 border-t border-slate-800 bg-slate-900 shrink-0">
+                    <Button onClick={copyToClipboard} variant="secondary" size="sm" className="w-full font-bold hover:bg-white text-xs h-8">
                         Copiar Texto
                     </Button>
                 </div>
@@ -257,9 +243,9 @@ export function CopyTool({ defaultNiche }: { defaultNiche: string }) {
 
         {/* HISTÓRICO */}
         <Card className="border-slate-200 bg-slate-50 shadow-sm">
-            <CardHeader className="py-3 border-b border-slate-200 bg-white rounded-t-lg flex flex-row items-center justify-between">
-              <CardTitle className="text-sm flex items-center gap-2 text-slate-700 font-bold">
-                <History className="h-4 w-4 text-blue-500" /> Histórico Recente
+            <CardHeader className="py-2 border-b border-slate-200 bg-white rounded-t-lg flex flex-row items-center justify-between px-4">
+              <CardTitle className="text-xs flex items-center gap-2 text-slate-700 font-bold">
+                <History className="h-3 w-3 text-blue-500" /> Histórico
               </CardTitle>
               {history.length > 0 && (
                   <button onClick={clearHistory} className="text-[10px] text-red-400 hover:text-red-600 flex items-center gap-1 hover:underline">
@@ -269,32 +255,29 @@ export function CopyTool({ defaultNiche }: { defaultNiche: string }) {
             </CardHeader>
             <CardContent className="p-0">
               {history.length > 0 ? (
-                  <div className="max-h-[250px] overflow-y-auto">
+                  <div className="max-h-[150px] overflow-y-auto">
                     {history.map((item) => (
                         <div 
                             key={item.id} 
-                            // Clicar na linha carrega o texto
                             onClick={() => setGeneratedContent(item.content)}
-                            className="group flex items-center justify-between p-3 bg-white border-b border-slate-100 hover:bg-blue-50 transition-all cursor-pointer"
+                            className="group flex items-center justify-between p-2 bg-white border-b border-slate-100 hover:bg-blue-50 transition-all cursor-pointer px-4"
                         >
                             <div className="overflow-hidden pr-2">
-                                <p className="font-bold text-xs text-slate-700 truncate w-48">{item.topic}</p>
-                                <p className="text-[10px] text-slate-400 flex gap-2 mt-1">
+                                <p className="font-bold text-[10px] text-slate-700 truncate w-40">{item.topic}</p>
+                                <p className="text-[9px] text-slate-400 flex gap-2">
                                 <span className="bg-slate-100 px-1 rounded border border-slate-200">{item.niche}</span> 
                                 <span>{item.date}</span>
                                 </p>
                             </div>
-                            {/* Botão Visual de VER */}
-                            <div className="h-8 w-8 flex items-center justify-center rounded-full bg-slate-50 text-slate-400 group-hover:bg-blue-100 group-hover:text-blue-600 transition-colors">
-                                <Eye className="h-4 w-4" />
+                            <div className="h-6 w-6 flex items-center justify-center rounded-full bg-slate-50 text-slate-400 group-hover:bg-blue-100 group-hover:text-blue-600 transition-colors">
+                                <Eye className="h-3 w-3" />
                             </div>
                         </div>
                     ))}
                   </div>
               ) : (
-                  <div className="p-8 text-center text-slate-400 flex flex-col items-center gap-2">
-                      <History className="h-8 w-8 opacity-20" />
-                      <p className="text-xs font-medium">Suas últimas 5 legendas ficarão salvas aqui automaticamente.</p>
+                  <div className="p-4 text-center text-slate-400 flex flex-col items-center gap-1">
+                      <p className="text-[10px] font-medium">Histórico vazio.</p>
                   </div>
               )}
             </CardContent>
