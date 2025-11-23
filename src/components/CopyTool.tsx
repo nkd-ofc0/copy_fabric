@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
-import { Sparkles, Lock, Star, Zap, ShieldCheck, Clock, Crown } from 'lucide-react';
+import { Sparkles, Lock, Star, Zap, Check } from 'lucide-react';
 import { generateCopyAction } from '@/app/actions';
 
 export function CopyTool({ defaultNiche }: { defaultNiche: string }) {
@@ -17,7 +17,7 @@ export function CopyTool({ defaultNiche }: { defaultNiche: string }) {
   const [accessCode, setAccessCode] = useState('');
   const [error, setError] = useState('');
   
-  // Estados de Controle
+  // Estados
   const [freeUses, setFreeUses] = useState(0);
   const [isVip, setIsVip] = useState(false);
 
@@ -25,34 +25,30 @@ export function CopyTool({ defaultNiche }: { defaultNiche: string }) {
   const CHECKOUT_LINK = "https://www.mercadopago.com.br/subscriptions/checkout?preapproval_plan_id=412d19310b5f4e60a60b366da10c0f92"; 
   const SENHA_MESTRA_DO_SERVIDOR = "Xciooptydf1.!";
 
-  // 1. Ao carregar, lê a memória do navegador
   useEffect(() => {
     if (defaultNiche) setNiche(defaultNiche);
     
     const savedUses = localStorage.getItem('copyfactory_uses');
     const savedVip = localStorage.getItem('copyfactory_vip');
     
-    if (savedUses) setFreeUses(parseInt(savedUses));
+    if (savedUses) setFreeUses(parseInt(savedUses || '0'));
     if (savedVip === 'true') setIsVip(true);
   }, [defaultNiche]);
 
   const handleGenerate = async () => {
-    // LER O ESTADO ATUALIZADO DIRETO DA MEMÓRIA (Para evitar buracos)
+    // LER ESTADO ATUALIZADO
     const currentUses = parseInt(localStorage.getItem('copyfactory_uses') || '0');
     const currentVip = localStorage.getItem('copyfactory_vip') === 'true';
     
-    // Se o estado local ainda não atualizou, forçamos a atualização
     if (currentUses !== freeUses) setFreeUses(currentUses);
     if (currentVip !== isVip) setIsVip(currentVip);
 
     const userProvidedPassword = accessCode.trim();
-    const isFreeTrial = currentUses < 1; // Só é grátis se uso for 0
+    const isFreeTrial = currentUses < 1;
 
-    // --- A GRANDE TRAVA DE SEGURANÇA ---
-    // Se não é VIP, Já usou 1 vez ou mais, E não digitou senha: BLOQUEIA.
+    // TRAVA DE BLOQUEIO
     if (!currentVip && !isFreeTrial && !userProvidedPassword) {
-      setError('🔒 Seu teste gratuito acabou. Apoie o projeto para continuar.');
-      // Força a atualização visual para mostrar o bloco de venda
+      setError('🔒 Limite grátis atingido. Apoie o projeto para continuar.');
       setFreeUses(currentUses); 
       return;
     }
@@ -65,14 +61,12 @@ export function CopyTool({ defaultNiche }: { defaultNiche: string }) {
     setLoading(true);
     setError('');
     
-    // Define qual senha enviar pro servidor
     const codeToSend = userProvidedPassword || ((isFreeTrial || currentVip) ? SENHA_MESTRA_DO_SERVIDOR : '');
 
     const result = await generateCopyAction(niche, topic, codeToSend);
 
     if (result.error) {
       setError(result.error);
-      // Se deu erro de senha, remove o VIP
       if (currentVip) {
          setIsVip(false);
          localStorage.removeItem('copyfactory_vip');
@@ -80,15 +74,12 @@ export function CopyTool({ defaultNiche }: { defaultNiche: string }) {
     } else if (result.data) {
       setGeneratedContent(result.data);
       
-      // SUCESSO! Lógica de incremento
       if (isFreeTrial && !userProvidedPassword) {
-        // Se era o teste grátis, agora SOMA +1 e GRAVA NA HORA
         const newUses = currentUses + 1;
         setFreeUses(newUses);
         localStorage.setItem('copyfactory_uses', newUses.toString());
       }
       
-      // Se usou senha válida, vira VIP
       if (!result.error && userProvidedPassword) {
         setIsVip(true);
         localStorage.setItem('copyfactory_vip', 'true');
@@ -102,7 +93,6 @@ export function CopyTool({ defaultNiche }: { defaultNiche: string }) {
     alert('Legenda copiada!');
   };
 
-  // Variável visual para saber se mostra o bloco de venda
   const isLocked = !isVip && freeUses >= 1;
 
   return (
@@ -116,7 +106,7 @@ export function CopyTool({ defaultNiche }: { defaultNiche: string }) {
                 {isVip ? <Star className="h-6 w-6 text-yellow-500 fill-yellow-500" /> : <Zap className="h-6 w-6 text-blue-600 fill-blue-100" />}
                 {isVip ? "Modo VIP Ativo" : "Gerador Viral AI"}
               </CardTitle>
-              {/* Só mostra "Teste Grátis" se realmente for 0 */}
+              
               {!isVip && freeUses === 0 && (
                 <span className="text-[10px] bg-green-100 text-green-700 px-3 py-1 rounded-full font-bold border border-green-200 uppercase tracking-wide animate-pulse">
                   Teste Grátis Disponível
@@ -132,12 +122,13 @@ export function CopyTool({ defaultNiche }: { defaultNiche: string }) {
           </CardHeader>
           
           <CardContent className="space-y-6 pt-6">
-            {/* BLOCO DE VENDA - AGORA COM A COPY QUE VOCÊ PEDIU */}
+            
+            {/* BLOCO DE VENDA */}
             {isLocked && (
               <div className="bg-blue-50 p-6 rounded-xl border-2 border-blue-100 space-y-4 animate-in fade-in slide-in-from-top-2 shadow-inner">
                 <div className="text-center space-y-2">
                   <h3 className="text-blue-900 font-black text-xl flex items-center justify-center gap-2 uppercase tracking-tight">
-                    <Crown className="w-6 h-6 text-yellow-500 fill-yellow-500" /> Gostou da ferramenta?
+                    <Star className="w-6 h-6 text-yellow-500 fill-yellow-500" /> Gostou da ferramenta?
                   </h3>
                   <p className="text-slate-700 text-sm font-medium leading-relaxed max-w-md mx-auto">
                     Apoie a gente e assine o CopyFactory para poupar horas de bloqueio criativo e produza copys ilimitadas como um expert.
@@ -145,8 +136,8 @@ export function CopyTool({ defaultNiche }: { defaultNiche: string }) {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs text-slate-600 py-2">
-                    <div className="flex items-center gap-2 bg-white p-2 rounded border border-blue-100"><CheckCircle2 className="w-4 h-4 text-green-600"/> Gerações Ilimitadas</div>
-                    <div className="flex items-center gap-2 bg-white p-2 rounded border border-blue-100"><CheckCircle2 className="w-4 h-4 text-green-600"/> Atualizações VIP</div>
+                    <div className="flex items-center gap-2 bg-white p-2 rounded border border-blue-100"><Check className="w-4 h-4 text-green-600"/> Gerações Ilimitadas</div>
+                    <div className="flex items-center gap-2 bg-white p-2 rounded border border-blue-100"><Check className="w-4 h-4 text-green-600"/> Atualizações VIP</div>
                 </div>
 
                 <div className="pt-2 flex flex-col gap-3">
@@ -204,7 +195,7 @@ export function CopyTool({ defaultNiche }: { defaultNiche: string }) {
               </div>
             )}
 
-            {/* BOTÃO DE GERAR (Desaparece ou muda se estiver bloqueado, para forçar a atenção no bloco de venda) */}
+            {/* Se NÃO estiver bloqueado, mostra o botão de gerar */}
             {!isLocked && (
                 <Button 
                 onClick={handleGenerate} 
@@ -249,7 +240,7 @@ export function CopyTool({ defaultNiche }: { defaultNiche: string }) {
                   <Sparkles className="h-8 w-8 opacity-50" />
                 </div>
                 <p className="text-sm text-center max-w-[200px] leading-relaxed">
-                  {isLocked ? "🔒 Aguardando desbloqueio para continuar escrevendo..." : "Aguardando você preencher os dados ao lado..."}
+                  {isLocked ? "🔒 Aguardando desbloqueio..." : "Aguardando você preencher os dados ao lado..."}
                 </p>
               </div>
             )}
