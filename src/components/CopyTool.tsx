@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
-import { Sparkles, Lock, Star, Zap, ShieldCheck, Clock } from 'lucide-react';
+import { Sparkles, Lock, Star, Zap, ShieldCheck, Clock, Crown } from 'lucide-react';
 import { generateCopyAction } from '@/app/actions';
 
 export function CopyTool({ defaultNiche }: { defaultNiche: string }) {
@@ -16,32 +16,47 @@ export function CopyTool({ defaultNiche }: { defaultNiche: string }) {
   const [topic, setTopic] = useState('');
   const [accessCode, setAccessCode] = useState('');
   const [error, setError] = useState('');
+  
+  // Estados de Controle
   const [freeUses, setFreeUses] = useState(0);
   const [isVip, setIsVip] = useState(false);
 
-  // SEU LINK DE PAGAMENTO
+  // CONFIGURAÇÕES
   const CHECKOUT_LINK = "https://www.mercadopago.com.br/subscriptions/checkout?preapproval_plan_id=412d19310b5f4e60a60b366da10c0f92"; 
   const SENHA_MESTRA_DO_SERVIDOR = "Xciooptydf1.!";
 
+  // 1. Ao carregar, lê a memória do navegador
   useEffect(() => {
     if (defaultNiche) setNiche(defaultNiche);
+    
     const savedUses = localStorage.getItem('copyfactory_uses');
     const savedVip = localStorage.getItem('copyfactory_vip');
+    
     if (savedUses) setFreeUses(parseInt(savedUses));
     if (savedVip === 'true') setIsVip(true);
   }, [defaultNiche]);
 
   const handleGenerate = async () => {
-    const isFreeTrial = freeUses < 1;
+    // LER O ESTADO ATUALIZADO DIRETO DA MEMÓRIA (Para evitar buracos)
+    const currentUses = parseInt(localStorage.getItem('copyfactory_uses') || '0');
+    const currentVip = localStorage.getItem('copyfactory_vip') === 'true';
     
-    // Se o usuário digitou uma senha, vamos tentar usar ela PRIORITARIAMENTE
-    const userProvidedPassword = accessCode.trim();
+    // Se o estado local ainda não atualizou, forçamos a atualização
+    if (currentUses !== freeUses) setFreeUses(currentUses);
+    if (currentVip !== isVip) setIsVip(currentVip);
 
-    // Bloqueio: Se não é VIP, não é trial e não digitou senha
-    if (!isVip && !isFreeTrial && !userProvidedPassword) {
-      setError('🔒 Limite grátis atingido. Insira sua Senha VIP para continuar.');
+    const userProvidedPassword = accessCode.trim();
+    const isFreeTrial = currentUses < 1; // Só é grátis se uso for 0
+
+    // --- A GRANDE TRAVA DE SEGURANÇA ---
+    // Se não é VIP, Já usou 1 vez ou mais, E não digitou senha: BLOQUEIA.
+    if (!currentVip && !isFreeTrial && !userProvidedPassword) {
+      setError('🔒 Seu teste gratuito acabou. Apoie o projeto para continuar.');
+      // Força a atualização visual para mostrar o bloco de venda
+      setFreeUses(currentUses); 
       return;
     }
+
     if (!niche || !topic) {
       setError('Por favor, preencha o nicho e o tópico.');
       return;
@@ -50,29 +65,31 @@ export function CopyTool({ defaultNiche }: { defaultNiche: string }) {
     setLoading(true);
     setError('');
     
-    // Lógica de Senha: Se o usuário digitou, usa a dele. Se não, usa a do sistema (se for trial/vip)
-    const codeToSend = userProvidedPassword || ((isFreeTrial || isVip) ? SENHA_MESTRA_DO_SERVIDOR : '');
+    // Define qual senha enviar pro servidor
+    const codeToSend = userProvidedPassword || ((isFreeTrial || currentVip) ? SENHA_MESTRA_DO_SERVIDOR : '');
 
     const result = await generateCopyAction(niche, topic, codeToSend);
 
     if (result.error) {
       setError(result.error);
-      if (isVip) {
+      // Se deu erro de senha, remove o VIP
+      if (currentVip) {
          setIsVip(false);
          localStorage.removeItem('copyfactory_vip');
       }
     } else if (result.data) {
       setGeneratedContent(result.data);
       
-      // Se era trial e não tinha senha, gasta o trial
+      // SUCESSO! Lógica de incremento
       if (isFreeTrial && !userProvidedPassword) {
-        const newUses = freeUses + 1;
+        // Se era o teste grátis, agora SOMA +1 e GRAVA NA HORA
+        const newUses = currentUses + 1;
         setFreeUses(newUses);
         localStorage.setItem('copyfactory_uses', newUses.toString());
       }
       
-      // Se funcionou, marca como VIP
-      if (!result.error) {
+      // Se usou senha válida, vira VIP
+      if (!result.error && userProvidedPassword) {
         setIsVip(true);
         localStorage.setItem('copyfactory_vip', 'true');
       }
@@ -85,6 +102,9 @@ export function CopyTool({ defaultNiche }: { defaultNiche: string }) {
     alert('Legenda copiada!');
   };
 
+  // Variável visual para saber se mostra o bloco de venda
+  const isLocked = !isVip && freeUses >= 1;
+
   return (
     <div className="grid gap-8 w-full max-w-6xl grid-cols-1 md:grid-cols-12">
       
@@ -96,34 +116,74 @@ export function CopyTool({ defaultNiche }: { defaultNiche: string }) {
                 {isVip ? <Star className="h-6 w-6 text-yellow-500 fill-yellow-500" /> : <Zap className="h-6 w-6 text-blue-600 fill-blue-100" />}
                 {isVip ? "Modo VIP Ativo" : "Gerador Viral AI"}
               </CardTitle>
-              {!isVip && freeUses < 1 && (
-                <span className="text-[10px] bg-green-100 text-green-700 px-3 py-1 rounded-full font-bold border border-green-200 uppercase tracking-wide">
+              {/* Só mostra "Teste Grátis" se realmente for 0 */}
+              {!isVip && freeUses === 0 && (
+                <span className="text-[10px] bg-green-100 text-green-700 px-3 py-1 rounded-full font-bold border border-green-200 uppercase tracking-wide animate-pulse">
                   Teste Grátis Disponível
                 </span>
               )}
             </div>
             
-            {/* COPY DE MARKETING AQUI */}
             <div className="space-y-2 pt-2">
-              <p className="text-slate-600 leading-relaxed">
-                Chega de encarar a tela em branco. Nossa Inteligência Artificial cria legendas persuasivas, com gatilhos mentais e emojis, em segundos.
+              <p className="text-slate-600 leading-relaxed text-sm">
+                Nossa Inteligência Artificial cria legendas persuasivas, com gatilhos mentais e emojis, em segundos.
               </p>
-              <div className="flex gap-4 text-xs text-slate-500 font-medium">
-                <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> Economize 5h/semana</span>
-                <span className="flex items-center gap-1"><ShieldCheck className="w-3 h-3" /> Copywriting Validado</span>
-              </div>
             </div>
           </CardHeader>
           
           <CardContent className="space-y-6 pt-6">
-            <div className="space-y-4">
+            {/* BLOCO DE VENDA - AGORA COM A COPY QUE VOCÊ PEDIU */}
+            {isLocked && (
+              <div className="bg-blue-50 p-6 rounded-xl border-2 border-blue-100 space-y-4 animate-in fade-in slide-in-from-top-2 shadow-inner">
+                <div className="text-center space-y-2">
+                  <h3 className="text-blue-900 font-black text-xl flex items-center justify-center gap-2 uppercase tracking-tight">
+                    <Crown className="w-6 h-6 text-yellow-500 fill-yellow-500" /> Gostou da ferramenta?
+                  </h3>
+                  <p className="text-slate-700 text-sm font-medium leading-relaxed max-w-md mx-auto">
+                    Apoie a gente e assine o CopyFactory para poupar horas de bloqueio criativo e produza copys ilimitadas como um expert.
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs text-slate-600 py-2">
+                    <div className="flex items-center gap-2 bg-white p-2 rounded border border-blue-100"><CheckCircle2 className="w-4 h-4 text-green-600"/> Gerações Ilimitadas</div>
+                    <div className="flex items-center gap-2 bg-white p-2 rounded border border-blue-100"><CheckCircle2 className="w-4 h-4 text-green-600"/> Atualizações VIP</div>
+                </div>
+
+                <div className="pt-2 flex flex-col gap-3">
+                  <Button 
+                    className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-6 text-lg shadow-lg shadow-green-200 transition-all hover:scale-[1.02]" 
+                    onClick={() => window.open(CHECKOUT_LINK, '_blank')}
+                  >
+                    QUERO SER EXPERT (R$ 19,90)
+                  </Button>
+                  
+                  <div className="relative my-2">
+                    <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-slate-300/50" /></div>
+                    <div className="relative flex justify-center text-[10px] uppercase font-bold tracking-widest"><span className="bg-blue-50 px-2 text-slate-400">Área de Membros</span></div>
+                  </div>
+
+                  <div className="flex items-center gap-2 bg-white p-1 rounded-lg border border-slate-200 focus-within:border-blue-400 transition-colors">
+                    <Lock className="ml-2 h-4 w-4 text-slate-400" />
+                    <Input 
+                      type="password" 
+                      placeholder="Já tem a senha? Digite aqui..." 
+                      value={accessCode} 
+                      onChange={(e) => setAccessCode(e.target.value)} 
+                      className="border-none focus-visible:ring-0 bg-transparent h-10 text-sm" 
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div className={`space-y-4 ${isLocked ? 'opacity-50 pointer-events-none grayscale' : ''}`}>
               <div className="space-y-2">
                 <Label className="text-slate-700 font-bold">Qual o seu Nicho?</Label>
                 <Input 
                   value={niche} 
                   onChange={(e) => setNiche(e.target.value)} 
                   placeholder="Ex: Hamburgueria, Advogado, Petshop..." 
-                  className="h-12 text-lg bg-slate-50 border-slate-200 focus:border-blue-500 transition-all"
+                  className="h-12 text-lg bg-slate-50"
                 />
               </div>
 
@@ -133,37 +193,10 @@ export function CopyTool({ defaultNiche }: { defaultNiche: string }) {
                   value={topic} 
                   onChange={(e) => setTopic(e.target.value)} 
                   placeholder="Descreva o conteúdo, promoção ou dica..." 
-                  className="h-32 resize-none text-base bg-slate-50 border-slate-200 focus:border-blue-500 transition-all"
+                  className="h-32 resize-none text-base bg-slate-50"
                 />
               </div>
             </div>
-
-            {/* ÁREA DE LOGIN SEMPRE VISÍVEL MAS DISCRETA */}
-            {!isVip && (
-              <div className="bg-slate-50 p-4 rounded-lg border border-slate-100">
-                <div className="flex items-center justify-between mb-2">
-                  <Label className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-                    Já é membro VIP?
-                  </Label>
-                  <button 
-                    onClick={() => window.open(CHECKOUT_LINK, '_blank')}
-                    className="text-xs text-blue-600 hover:underline font-medium"
-                  >
-                    Não tenho senha (Comprar)
-                  </button>
-                </div>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
-                  <Input 
-                    type="password" 
-                    placeholder="Digite sua Senha VIP aqui..." 
-                    value={accessCode} 
-                    onChange={(e) => setAccessCode(e.target.value)} 
-                    className="pl-9 bg-white border-slate-200" 
-                  />
-                </div>
-              </div>
-            )}
 
             {error && (
               <div className="bg-red-50 text-red-600 p-4 rounded-lg text-sm font-medium border border-red-100 flex items-center gap-2 animate-in slide-in-from-top-1">
@@ -171,17 +204,20 @@ export function CopyTool({ defaultNiche }: { defaultNiche: string }) {
               </div>
             )}
 
-            <Button 
-              onClick={handleGenerate} 
-              className="w-full py-7 text-lg font-bold shadow-lg shadow-blue-100 bg-blue-600 hover:bg-blue-700 hover:scale-[1.01] transition-all"
-              disabled={loading}
-            >
-              {loading ? (
-                <span className="flex items-center gap-2">Escrevendo sua legenda... <Sparkles className="w-4 h-4 animate-spin"/></span>
-              ) : (
-                <span className="flex items-center gap-2"><Sparkles className="w-5 h-5" /> Gerar Legenda Mágica</span>
-              )}
-            </Button>
+            {/* BOTÃO DE GERAR (Desaparece ou muda se estiver bloqueado, para forçar a atenção no bloco de venda) */}
+            {!isLocked && (
+                <Button 
+                onClick={handleGenerate} 
+                className="w-full py-7 text-lg font-bold shadow-lg shadow-blue-100 bg-blue-600 hover:bg-blue-700 hover:scale-[1.01] transition-all"
+                disabled={loading}
+                >
+                {loading ? (
+                    <span className="flex items-center gap-2">Escrevendo... <Sparkles className="w-4 h-4 animate-spin"/></span>
+                ) : (
+                    <span className="flex items-center gap-2"><Sparkles className="w-5 h-5" /> Gerar Legenda Grátis</span>
+                )}
+                </Button>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -193,7 +229,7 @@ export function CopyTool({ defaultNiche }: { defaultNiche: string }) {
             <CardTitle className="text-lg flex items-center justify-between">
               <span>Resultado</span>
               {generatedContent && (
-                <span className="text-[10px] bg-green-500/20 text-green-400 px-2 py-1 rounded border border-green-500/30">Pronto para postar</span>
+                <span className="text-[10px] bg-green-500/20 text-green-400 px-2 py-1 rounded border border-green-500/30">Pronto</span>
               )}
             </CardTitle>
           </CardHeader>
@@ -213,7 +249,7 @@ export function CopyTool({ defaultNiche }: { defaultNiche: string }) {
                   <Sparkles className="h-8 w-8 opacity-50" />
                 </div>
                 <p className="text-sm text-center max-w-[200px] leading-relaxed">
-                  Aguardando você preencher os dados ao lado...
+                  {isLocked ? "🔒 Aguardando desbloqueio para continuar escrevendo..." : "Aguardando você preencher os dados ao lado..."}
                 </p>
               </div>
             )}
