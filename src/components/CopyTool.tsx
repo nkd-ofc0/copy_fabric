@@ -145,7 +145,7 @@ export function CopyTool({ defaultNiche }: { defaultNiche: string }) {
                     className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-6 text-lg shadow-lg shadow-green-200 transition-all hover:scale-[1.02]" 
                     onClick={() => window.open(CHECKOUT_LINK, '_blank')}
                   >
-                    QUERO SER EXPERT (R$ 19,90)
+                    QUERO SER EXPERT (R$ 16,90)
                   </Button>
                   
                   <div className="relative my-2">
