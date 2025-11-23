@@ -19,7 +19,7 @@ export function CopyTool({ defaultNiche }: { defaultNiche: string }) {
   const [freeUses, setFreeUses] = useState(0);
   const [isVip, setIsVip] = useState(false);
 
-  const CHECKOUT_LINK = "https://mercadopago.com.br"; 
+  const CHECKOUT_LINK = "https://www.mercadopago.com.br/subscriptions/checkout?preapproval_plan_id=412d19310b5f4e60a60b366da10c0f92 "; 
 
   useEffect(() => {
     if (defaultNiche) setNiche(defaultNiche);
@@ -47,7 +47,7 @@ export function CopyTool({ defaultNiche }: { defaultNiche: string }) {
     setLoading(true);
     setError('');
     
-    const senhaDoAction = "VIP2025"; 
+    const senhaDoAction = "Xciooptydf1.!"; 
     
     // --- CORREÇÃO AQUI ---
     // Se for VIP ou Grátis, usa a senha mestra automática. 
