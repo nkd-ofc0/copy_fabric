@@ -91,11 +91,22 @@ export function CopyTool({ defaultNiche }: { defaultNiche: string }) {
     <div className="grid gap-8 w-full max-w-6xl grid-cols-1 md:grid-cols-12">
       <div className="md:col-span-7 space-y-6">
         <Card className="border-slate-200 shadow-lg">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              {isVip ? <Star className="h-5 w-5 text-yellow-500 fill-yellow-500" /> : <Lock className="h-5 w-5 text-blue-600" />}
-              {isVip ? "Acesso VIP Ativo" : "Configurar Post"}
+         <CardHeader className="pb-4">
+            <CardTitle className="flex items-center justify-between text-xl">
+              <div className="flex items-center gap-2">
+                {isVip ? <Star className="h-6 w-6 text-yellow-500 fill-yellow-500" /> : <Zap className="h-6 w-6 text-blue-600" />}
+                {isVip ? "Modo Profissional" : "Criar Legenda"}
+              </div>
+              {/* AVISO VISUAL DO STATUS */}
+              {!isVip && freeUses < 1 && (
+                <span className="text-xs bg-green-100 text-green-700 px-3 py-1 rounded-full font-bold border border-green-200 animate-pulse">
+                  TESTE GRÁTIS ATIVO
+                </span>
+              )}
             </CardTitle>
+            <CardDescription className="text-slate-500">
+              Preencha os dados abaixo e deixe a IA escrever por você.
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             {/* SÓ MOSTRA O CAMPO DE PAGAR SE NÃO FOR VIP E JÁ GASTOU O GRÁTIS */}
