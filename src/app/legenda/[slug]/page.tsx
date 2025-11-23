@@ -36,8 +36,10 @@ export default async function Page({ params }: Props) {
         </h1>
       </div>
 
+      {/* Ferramenta */}
       <CopyTool defaultNiche={displayTitle} />
 
+      {/* RODAPÉ NKD */}
       <div className="mt-20 mb-10 text-center space-y-4">
          <div className="h-px w-16 bg-slate-200 mx-auto"></div>
          
@@ -55,7 +57,7 @@ export default async function Page({ params }: Props) {
          </div>
          
          <p className="text-[10px] text-slate-300">
-           SEO Otimizado: /legenda/{resolvedParams.slug}
+           URL: /legenda/{resolvedParams.slug}
          </p>
       </div>
     </div>
