@@ -8,13 +8,14 @@ export default function Home() {
           CopyFactory <span className="text-blue-600">AI</span>
         </h1>
         <p className="text-slate-600 text-lg">
-          Ferramenta Profissional
+          Ferramenta Profissional de Copywriting
         </p>
       </div>
       
-      {/* ...CopyTool acima... */}
+      {/* Ferramenta */}
       <CopyTool defaultNiche="" />
 
+      {/* RODAPÉ NKD */}
       <div className="mt-20 mb-10 text-center space-y-4">
          <div className="h-px w-16 bg-slate-200 mx-auto"></div>
          
@@ -33,5 +34,4 @@ export default function Home() {
       </div>
     </div>
   );
-}
 }
